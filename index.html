@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Planner</title>
+<style>
+:root, .theme-light {
+  --todo: #94a3b8;
+  --in-progress: #f59e0b;
+  --done: #22c55e;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --danger: #ef4444;
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --hover-bg: #f8fafc;
+  --input-bg: #ffffff;
+  --toolbar-bg: var(--card);
+  --toolbar-border: var(--border);
+}
+.theme-dark {
+  --todo: #94a8c8;
+  --in-progress: #fbbf24;
+  --done: #34d399;
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --danger: #f87171;
+  --bg: #0f0f1a;
+  --card: #1a1a2e;
+  --text: #e0e0f0;
+  --text-muted: #6b6b8a;
+  --border: #2a2a3e;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --hover-bg: #22223a;
+  --input-bg: #16162a;
+  --toolbar-bg: #22223a;
+  --toolbar-border: #3a3a52;
+}
+.theme-unicorn {
+  --todo: #f472b6;
+  --in-progress: #fbbf24;
+  --done: #34d399;
+  --primary: #ec4899;
+  --primary-hover: #db2777;
+  --danger: #f87171;
+  --bg: #0a0a1a;
+  --card: #12122a;
+  --text: #e8e0f0;
+  --text-muted: #7c7caa;
+  --border: #2a1a3e;
+  --shadow: 0 1px 3px rgba(0,0,0,0.4);
+  --hover-bg: #1e1e36;
+  --input-bg: #0f0f22;
+  --toolbar-bg: #1e1e36;
+  --toolbar-border: #3a2a52;
+}
+.theme-dark input, .theme-dark select, .theme-dark textarea,
+.theme-unicorn input, .theme-unicorn select, .theme-unicorn textarea {
+  background: var(--input-bg);
+  color: var(--text);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  padding: 16px;
+}
+#app { max-width: 800px; margin: 0 auto; }
+
+/* Header */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+header h1 { font-size: 1.5rem; font-weight: 700; }
+.toolbar { display: flex; gap: 6px; flex-wrap: wrap; }
+.toolbar button {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.toolbar button:hover { background: var(--hover-bg); }
+.toolbar button.danger { border-color: var(--danger); color: var(--danger); }
+.toolbar button.danger:hover { background: #fef2f2; }
+.theme-dark .toolbar button,
+.theme-unicorn .toolbar button {
+  background: var(--toolbar-bg);
+  border-color: var(--toolbar-border);
+  color: var(--text);
+}
+.theme-dark .toolbar button.danger,
+.theme-unicorn .toolbar button.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.theme-dark .toolbar button.danger:hover,
+.theme-unicorn .toolbar button.danger:hover {
+  background: #2a1515;
+}
+
+/* Theme Selector */
+.theme-selector {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.theme-btn {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  line-height: 1.5;
+}
+.theme-btn.active {
+  background: var(--primary);
+  color: white;
+}
+.theme-btn:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+.theme-btn:hover:not(.active) {
+  background: var(--hover-bg);
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.filter-row { display: flex; align-items: center; gap: 8px; }
+.filter-row label { font-size: 0.85rem; font-weight: 600; }
+.filter-row select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  background: var(--card);
+}
+.add-task {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.add-task input {
+  flex: 1 1 140px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  min-width: 0;
+}
+.add-task input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}
+.add-task button {
+  padding: 8px 18px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.add-task button:hover { background: var(--primary-hover); }
+
+/* Sprint Goal */
+.sprint-goal { margin-bottom: 12px; }
+.sprint-goal textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 50px;
+  background: var(--card);
+  line-height: 1.5;
+}
+.sprint-goal textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}
+.sprint-goal label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.stats-bar span { white-space: nowrap; }
+
+/* Task Card */
+.task-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s;
+}
+.task-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.task-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  flex-wrap: wrap;
+}
+.status-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: all 0.15s;
+  background: white;
+}
+.status-btn.todo { border-color: var(--todo); color: var(--todo); }
+.status-btn.in-progress { border-color: var(--in-progress); color: var(--in-progress); }
+.status-btn.done { border-color: var(--done); color: var(--done); background: var(--done); color: white; }
+.status-btn:hover { transform: scale(1.1); }
+
+.task-fields {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.task-fields input {
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 4px 6px;
+  font-size: 0.9rem;
+  background: transparent;
+  min-width: 0;
+}
+.task-fields input:hover { border-bottom-color: var(--border); }
+.task-fields input:focus {
+  outline: none;
+  border-bottom-color: var(--primary);
+}
+.task-fields .task-title { flex: 3 1 140px; font-weight: 600; }
+.task-fields .task-assignee { flex: 2 1 100px; }
+.task-fields .task-estimate { flex: 1 1 60px; text-align: right; max-width: 80px; }
+.subtask-field-title { flex: 3 1 120px; }
+.subtask-field-assignee { flex: 2 1 80px; }
+.subtask-field-estimate { flex: 1 1 50px; text-align: right; max-width: 70px; }
+
+.task-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.task-actions button {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  line-height: 1;
+}
+.task-actions button:hover { background: var(--hover-bg); }
+.task-actions .del-btn { color: var(--danger); border-color: transparent; }
+.task-actions .del-btn:hover { background: #fef2f2; }
+
+/* Progress bar */
+.progress-wrap {
+  padding: 0 12px 4px;
+}
+.progress-bar-bg {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s, background 0.3s;
+}
+.progress-bar-fill.todo { background: var(--todo); }
+.progress-bar-fill.in-progress { background: var(--in-progress); }
+.progress-bar-fill.done { background: var(--done); }
+.progress-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Subtask list */
+.subtask-list {
+  padding: 0 12px 8px 28px;
+  display: none;
+}
+.subtask-list.open { display: block; }
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+.subtask-item input {
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 3px 4px;
+  font-size: 0.85rem;
+  background: transparent;
+  min-width: 0;
+}
+.subtask-item input:hover { border-bottom-color: var(--border); }
+.subtask-item input:focus {
+  outline: none;
+  border-bottom-color: var(--primary);
+}
+.subtask-item .del-sub-btn {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--danger);
+}
+.subtask-item .del-sub-btn:hover { text-decoration: underline; }
+.add-subtask-form {
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+.add-subtask-form input {
+  flex: 1 1 80px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  min-width: 0;
+}
+.add-subtask-form button {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+}
+.modal.open { display: flex; align-items: flex-start; justify-content: center; }
+.modal-content {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 700px;
+  width: 100%;
+  margin-top: 40px;
+  position: relative;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+}
+.modal-content .close {
+  position: absolute;
+  top: 12px; right: 16px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  color: var(--text-muted);
+}
+.modal-content .close:hover { color: var(--text); }
+.modal-content h2 { margin-bottom: 16px; }
+.modal-content textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+.modal-content textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.modal-content .modal-btn {
+  padding: 8px 18px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.modal-content .modal-btn:hover { background: var(--primary-hover); }
+
+/* Report */
+.report-section { margin-bottom: 24px; }
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.report-table th {
+  text-align: left;
+  padding: 8px 6px;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+.report-table th:not(:first-child) { text-align: center; }
+.report-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.report-table td:not(:first-child) { text-align: center; }
+.report-table tbody tr:hover td { background: var(--hover-bg); }
+.report-table .rep-name { font-weight: 600; text-align: left !important; }
+.report-progress-cell { min-width: 130px; white-space: nowrap; }
+.report-progress-bar {
+  display: inline-block;
+  width: 60px;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.report-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.report-progress-fill.todo { background: var(--todo); }
+.report-progress-fill.in-progress { background: var(--in-progress); }
+.report-progress-fill.done { background: var(--done); }
+.report-pct {
+  margin-left: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  vertical-align: middle;
+}
+.report-pct.low { color: var(--danger); }
+.report-pct.mid { color: var(--in-progress); }
+.report-pct.high { color: var(--done); }
+.report-total {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: var(--hover-bg);
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.report-total-bar {
+  flex: 1;
+  min-width: 120px;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.report-total-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s;
+}
+.report-total-fill.todo { background: var(--todo); }
+.report-total-fill.in-progress { background: var(--in-progress); }
+.report-total-fill.done { background: var(--done); }
+
+/* ─── Unicorn mode ─────────────────────────────── */
+.theme-unicorn header h1,
+.theme-unicorn .sprint-goal label,
+.theme-unicorn .report-section h2 {
+  background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.theme-unicorn .task-card {
+  border-left: 3px solid;
+  border-image: linear-gradient(180deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6) 1;
+}
+.theme-unicorn .status-btn.todo { border-color: #ff6b6b; color: #ff6b6b; }
+.theme-unicorn .status-btn.in-progress { border-color: #ffd93d; color: #ffd93d; }
+.theme-unicorn .status-btn.done { border-color: #6bcb77; background: #6bcb77; color: white; }
+.theme-unicorn .progress-bar-fill { background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff) !important; }
+.theme-unicorn .report-progress-fill { background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff) !important; }
+.theme-unicorn .report-total-fill { background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff) !important; }
+.theme-unicorn .add-task button,
+.theme-unicorn .modal-content .modal-btn,
+.theme-unicorn .add-subtask-form button {
+  background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6);
+  color: white;
+  font-weight: 700;
+}
+.theme-unicorn .add-task button:hover,
+.theme-unicorn .modal-content .modal-btn:hover { opacity: 0.9; }
+.theme-unicorn .theme-btn.active {
+  background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff);
+}
+
+@media (max-width: 600px) {
+  header h1 { font-size: 1.2rem; }
+  .task-main { padding: 8px; }
+  .task-fields input { font-size: 0.85rem; }
+  .subtask-list { padding-left: 16px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Sprint Planner</h1>
+    <div class="theme-selector">
+      <button class="theme-btn active" data-theme="light">Light</button>
+      <button class="theme-btn" data-theme="dark">Dark</button>
+      <button class="theme-btn" data-theme="unicorn">Unicorn</button>
+    </div>
+    <div class="toolbar">
+      <button id="exportBtn">Export MD</button>
+      <button id="importBtn">Import MD</button>
+      <button id="reportBtn">Report</button>
+      <button id="resetBtn" class="danger">Reset</button>
+    </div>
+  </header>
+
+  <div class="sprint-goal">
+    <label for="sprintGoal">Sprint Goal</label>
+    <textarea id="sprintGoal" placeholder="What do we want to achieve this sprint?..." rows="2"></textarea>
+  </div>
+
+  <div class="controls">
+    <div class="filter-row">
+      <label for="filterAssignee">Filter:</label>
+      <select id="filterAssignee">
+        <option value="all">All Assignees</option>
+      </select>
+    </div>
+    <div class="add-task">
+      <input id="newTitle" placeholder="Task title..." autocomplete="off" />
+      <input id="newAssignee" placeholder="Assignee..." autocomplete="off" list="assigneeDatalist" />
+      <input id="newEstimate" placeholder="Estimate..." autocomplete="off" />
+      <button id="addBtn">Add</button>
+    </div>
+  </div>
+
+  <div class="stats-bar" id="statsBar"></div>
+  <div id="taskList"></div>
+</div>
+
+<div id="reportModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="reportClose">&times;</span>
+    <h2>Sprint Report</h2>
+    <div id="reportContent"></div>
+    <button class="modal-btn" id="exportReportBtn">Export Report MD</button>
+  </div>
+</div>
+
+<div id="importModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="importClose">&times;</span>
+    <h2>Import Markdown</h2>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+      Paste previously exported markdown below. Existing tasks will be replaced.
+    </p>
+    <textarea id="importText" placeholder="Paste markdown here..."></textarea>
+    <button class="modal-btn" id="importConfirmBtn">Import</button>
+  </div>
+</div>
+
+<datalist id="assigneeDatalist"></datalist>
+<script>
+// ─── State ───────────────────────────────────────────────
+let tasks = [];
+let sprintGoal = '';
+let filterValue = 'all';
+
+const STORAGE_KEY = 'sprint_planner_tasks';
+const GOAL_KEY = 'sprint_planner_goal';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    tasks = raw ? JSON.parse(raw) : [];
+  } catch { tasks = []; }
+  try {
+    sprintGoal = localStorage.getItem(GOAL_KEY) || '';
+  } catch { sprintGoal = ''; }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  } catch {}
+}
+
+function saveGoal() {
+  try { localStorage.setItem(GOAL_KEY, sprintGoal); } catch {}
+}
+
+// ─── Theme ─────────────────────────────────────────────────
+const THEME_KEY = 'sprint_planner_theme';
+
+function loadTheme() {
+  let theme = 'light';
+  try { theme = localStorage.getItem(THEME_KEY) || 'light'; } catch {}
+  setTheme(theme, false);
+}
+
+function setTheme(name, save = true) {
+  document.body.className = name === 'light' ? '' : 'theme-' + name;
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === name);
+  });
+  if (save) {
+    try { localStorage.setItem(THEME_KEY, name); } catch {}
+  }
+}
+
+// ─── Estimate helpers ────────────────────────────────────
+function parseEstimate(str) {
+  str = (str || '').trim();
+  if (!str) return null;
+  const num = parseFloat(str);
+  if (isNaN(num)) return null;
+  const lower = str.toLowerCase().replace(/\s+/g, '');
+  if (lower.endsWith('h')) return { value: num, unit: 'h', raw: str };
+  if (lower.endsWith('d')) return { value: num, unit: 'd', raw: str };
+  if (lower.endsWith('sp')) return { value: num, unit: 'SP', raw: str };
+  if (/^\d+(\.\d+)?$/.test(str)) return { value: num, unit: 'pts', raw: str };
+  return { value: num, unit: str.replace(/[\d.\s]/g, ''), raw: str };
+}
+
+function estimateSum(entries) {
+  let totalHours = 0;
+  const other = {};
+
+  for (const e of entries) {
+    if (!e) continue;
+    if (e.unit === 'h') totalHours += e.value;
+    else if (e.unit === 'd') totalHours += e.value * 8;
+    else {
+      if (!other[e.unit]) other[e.unit] = 0;
+      other[e.unit] += e.value;
+    }
+  }
+
+  const parts = [];
+  if (totalHours > 0) {
+    const d = Math.floor(totalHours / 8);
+    const h = Math.round((totalHours % 8) * 10) / 10;
+    if (d > 0 && h > 0) parts.push(`${d}d ${h}h`);
+    else if (d > 0) parts.push(`${d}d`);
+    else parts.push(`${h}h`);
+  }
+  for (const [unit, val] of Object.entries(other)) {
+    parts.push(`${val}${unit}`);
+  }
+  return parts.join(' + ') || '-';
+}
+
+function formatProgress(pct) {
+  return pct.toFixed(0) + '%';
+}
+
+// ─── Markdown Export / Import ─────────────────────────────
+function exportMarkdown() {
+  let md = '# Sprint Planning\n\n';
+  if (sprintGoal) {
+    md += `**Sprint Goal:** ${sprintGoal}\n\n`;
+  }
+  for (const t of tasks) {
+    const est = t.estimate ? ` (${t.estimate})` : '';
+    const assignee = t.assignee ? ` | ${t.assignee}` : '';
+    const statusMap = { 'todo': 'To Do', 'in-progress': 'In Progress', 'done': 'Done' };
+    const progress = calcTaskProgress(t);
+    md += `## ${t.title}${est}${assignee}\n`;
+    md += `**Status:** ${statusMap[t.status] || t.status} | **Progress:** ${formatProgress(progress)}\n`;
+    if (t.subtasks && t.subtasks.length) {
+      for (const s of t.subtasks) {
+        const sEst = s.estimate ? ` (${s.estimate})` : '';
+        const sAss = s.assignee ? ` | ${s.assignee}` : '';
+        const box = s.status === 'done' ? 'x' : (s.status === 'in-progress' ? '/' : ' ');
+        md += `- [${box}] ${s.title}${sEst}${sAss}\n`;
+      }
+    }
+    md += '\n';
+  }
+  return md || '# Sprint Planning\n\n*No tasks yet.*\n';
+}
+
+function importMarkdown(md) {
+  const lines = md.split('\n');
+  const imported = [];
+  let currentTask = null;
+  let importedGoal = '';
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (line.startsWith('**Sprint Goal:**')) {
+      importedGoal = line.replace('**Sprint Goal:**', '').trim();
+    } else if (line.startsWith('## ')) {
+      if (currentTask) imported.push(currentTask);
+      const rest = line.slice(3);
+      const parts = rest.split('|').map(s => s.trim());
+      const title = parts[0] || 'Untitled';
+      let estimate = '';
+      let assignee = '';
+      if (parts.length >= 2) {
+        const second = parts[1].trim();
+        if (/^[\d]/.test(second)) {
+          estimate = second;
+          assignee = parts.length >= 3 ? parts[2].trim() : '';
+        } else {
+          assignee = second;
+        }
+      }
+      currentTask = { id: genId(), title, assignee, estimate, status: 'todo', expanded: false, subtasks: [] };
+    } else if (line.match(/^\s*-\s*\[([ x/])\]\s*/)) {
+      if (!currentTask) continue;
+      const m = line.match(/^\s*-\s*\[([ x/])\]\s*(.*)/);
+      if (!m) continue;
+      const rawStatus = m[1];
+      const content = m[2];
+      const subStatus = rawStatus === 'x' ? 'done' : (rawStatus === '/' ? 'in-progress' : 'todo');
+      const parts = content.split('|').map(s => s.trim());
+      const subTitle = parts[0] || 'Untitled';
+      let subEst = '';
+      let subAss = '';
+      if (parts.length >= 2) {
+        const second = parts[1].trim();
+        if (/^[\d]/.test(second)) {
+          subEst = second;
+          subAss = parts.length >= 3 ? parts[2].trim() : '';
+        } else {
+          subAss = second;
+        }
+      }
+      currentTask.subtasks.push({ id: genId(), title: subTitle, assignee: subAss, estimate: subEst, status: subStatus });
+    } else if (line.startsWith('**Status:')) {
+      if (!currentTask) continue;
+      const stMatch = line.match(/\*\*Status:\*\*\s*([^\|]+)/);
+      const statusMap = { 'To Do': 'todo', 'In Progress': 'in-progress', 'Done': 'done' };
+      if (stMatch) {
+        const st = stMatch[1].trim();
+        currentTask.status = statusMap[st] || st.toLowerCase();
+      }
+    }
+  }
+  if (currentTask) imported.push(currentTask);
+  return { tasks: imported, goal: importedGoal };
+}
+
+// ─── Task helpers ─────────────────────────────────────────
+function getNextStatus(s) {
+  if (s === 'todo') return 'in-progress';
+  if (s === 'in-progress') return 'done';
+  return 'todo';
+}
+
+function calcTaskProgress(task) {
+  if (!task.subtasks || task.subtasks.length === 0) {
+    if (task.status === 'done') return 100;
+    if (task.status === 'in-progress') return 50;
+    return 0;
+  }
+  const done = task.subtasks.filter(s => s.status === 'done').length;
+  return Math.round((done / task.subtasks.length) * 100);
+}
+
+function getAssigneeList() {
+  const set = new Set();
+  for (const t of tasks) {
+    if (t.assignee) set.add(t.assignee);
+    for (const s of (t.subtasks || [])) {
+      if (s.assignee) set.add(s.assignee);
+    }
+  }
+  return [...set].sort();
+}
+
+function updateAssigneeDatalist() {
+  const dl = document.getElementById('assigneeDatalist');
+  if (!dl) return;
+  dl.innerHTML = getAssigneeList().map(n => `<option value="${escAttr(n)}">`).join('');
+}
+
+function getFilteredTasks() {
+  if (filterValue === 'all') return tasks;
+  return tasks.filter(t => {
+    if (t.assignee && t.assignee.toLowerCase().includes(filterValue.toLowerCase())) return true;
+    if (t.subtasks && t.subtasks.some(s => s.assignee && s.assignee.toLowerCase().includes(filterValue.toLowerCase()))) return true;
+    return false;
+  });
+}
+
+// ─── Stats ────────────────────────────────────────────────
+function updateStats() {
+  const total = tasks.length;
+  const done = tasks.filter(t => t.status === 'done' && (!t.subtasks || t.subtasks.length === 0)).length +
+    tasks.filter(t => t.subtasks && t.subtasks.length > 0 && t.subtasks.every(s => s.status === 'done')).length;
+  const inProg = tasks.filter(t => t.status === 'in-progress' || (t.subtasks && t.subtasks.some(s => s.status !== 'todo') && t.subtasks.some(s => s.status !== 'done'))).length;
+  const el = document.getElementById('statsBar');
+  if (!el) return;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  el.innerHTML = `<span>Total: <strong>${total}</strong></span><span>Done: <strong>${done}</strong></span><span>Progress: <strong>${pct}%</strong></span>`;
+}
+
+// ─── Render ───────────────────────────────────────────────
+function render() {
+  updateAssigneeFilter();
+  updateAssigneeDatalist();
+  renderTasks();
+  updateStats();
+}
+
+function updateAssigneeFilter() {
+  const sel = document.getElementById('filterAssignee');
+  const current = sel.value;
+  sel.innerHTML = '<option value="all">All Assignees</option>';
+  for (const name of getAssigneeList()) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    if (name === current) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  filterValue = sel.value;
+}
+
+function renderTasks() {
+  const container = document.getElementById('taskList');
+  const filtered = getFilteredTasks();
+  if (filtered.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-muted);padding:20px 0;text-align:center;">No tasks yet. Add one above!</p>';
+    return;
+  }
+  let html = '';
+  for (const t of filtered) {
+    const progress = calcTaskProgress(t);
+    const statusLabel = { todo: '○', 'in-progress': '◐', done: '✓' };
+    const progressClass = progress === 100 ? 'done' : (progress > 0 ? 'in-progress' : 'todo');
+    html += `<div class="task-card" data-id="${t.id}">
+      <div class="task-main">
+        <button class="status-btn ${t.status}" data-action="toggle-status" data-id="${t.id}">${statusLabel[t.status]}</button>
+        <div class="task-fields">
+          <input class="task-title" value="${escAttr(t.title)}" placeholder="Task title" data-field="title" data-id="${t.id}" />
+          <input class="task-assignee" value="${escAttr(t.assignee)}" placeholder="Assignee" data-field="assignee" data-id="${t.id}" list="assigneeDatalist" />
+          <input class="task-estimate" value="${escAttr(t.estimate)}" placeholder="Est" data-field="estimate" data-id="${t.id}" />
+        </div>
+        <div class="task-actions">
+          <button data-action="toggle-subtasks" data-id="${t.id}" title="${t.expanded ? 'Collapse' : 'Expand'} subtasks">${t.expanded ? '▾' : '▸'} ${(t.subtasks||[]).length}</button>
+          <button data-action="add-subtask" data-id="${t.id}" title="Add subtask">+sub</button>
+          <button class="del-btn" data-action="delete-task" data-id="${t.id}" title="Delete task">✕</button>
+        </div>
+      </div>`;
+    if (t.subtasks) {
+      html += `<div class="progress-wrap"><div class="progress-bar-bg"><div class="progress-bar-fill ${progressClass}" style="width:${progress}%"></div></div><div class="progress-label">${formatProgress(progress)}</div></div>`;
+    }
+    html += `<div class="subtask-list ${t.expanded ? 'open' : ''}" data-id="${t.id}">`;
+    if (t.subtasks) {
+      for (const s of t.subtasks) {
+        const sLabel = { todo: '○', 'in-progress': '◐', done: '✓' };
+        html += `<div class="subtask-item" data-sub-id="${s.id}">
+          <button class="status-btn ${s.status}" data-action="toggle-sub-status" data-id="${t.id}" data-sub-id="${s.id}">${sLabel[s.status]}</button>
+          <input class="subtask-field-title" value="${escAttr(s.title)}" placeholder="Subtask" data-action="edit-sub" data-id="${t.id}" data-sub-id="${s.id}" data-field="title" />
+          <input class="subtask-field-assignee" value="${escAttr(s.assignee)}" placeholder="Assignee" data-action="edit-sub" data-id="${t.id}" data-sub-id="${s.id}" data-field="assignee" list="assigneeDatalist" />
+          <input class="subtask-field-estimate" value="${escAttr(s.estimate)}" placeholder="Est" data-action="edit-sub" data-id="${t.id}" data-sub-id="${s.id}" data-field="estimate" />
+          <button class="del-sub-btn" data-action="delete-sub" data-id="${t.id}" data-sub-id="${s.id}">✕</button>
+        </div>`;
+      }
+    }
+    html += `<div class="add-subtask-form" data-id="${t.id}">
+      <input placeholder="Subtask title..." data-sub-new-title />
+      <input placeholder="Assignee" data-sub-new-assignee list="assigneeDatalist" />
+      <input placeholder="Est" data-sub-new-estimate />
+      <button data-action="add-subtask-confirm" data-id="${t.id}">Add</button>
+    </div>`;
+    html += `</div></div>`;
+  }
+  container.innerHTML = html;
+  attachTaskEvents();
+}
+
+function escAttr(s) {
+  if (!s) return '';
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ─── DOM Events ───────────────────────────────────────────
+function attachTaskEvents() {
+  // Status toggle (task)
+  document.querySelectorAll('[data-action="toggle-status"]').forEach(btn => {
+    btn.onclick = () => {
+      const t = tasks.find(x => x.id === btn.dataset.id);
+      if (t) { t.status = getNextStatus(t.status); saveState(); render(); }
+    };
+  });
+  // Task field edit (save only, no re-render to preserve focus)
+  document.querySelectorAll('[data-field="title"],[data-field="assignee"],[data-field="estimate"]').forEach(inp => {
+    if (inp.dataset.subId) return;
+    inp.onchange = () => {
+      const t = tasks.find(x => x.id === inp.dataset.id);
+      if (t) { t[inp.dataset.field] = inp.value; saveState(); }
+    };
+  });
+  // Expand/collapse subtasks
+  document.querySelectorAll('[data-action="toggle-subtasks"]').forEach(btn => {
+    btn.onclick = () => {
+      const t = tasks.find(x => x.id === btn.dataset.id);
+      if (t) { t.expanded = !t.expanded; saveState(); render(); }
+    };
+  });
+  // Add subtask form expand
+  document.querySelectorAll('[data-action="add-subtask"]').forEach(btn => {
+    btn.onclick = () => {
+      const t = tasks.find(x => x.id === btn.dataset.id);
+      if (t) { t.expanded = true; saveState(); render(); }
+      setTimeout(() => {
+        const form = document.querySelector(`.add-subtask-form[data-id="${btn.dataset.id}"]`);
+        if (form) { const inp = form.querySelector('[data-sub-new-title]'); if (inp) inp.focus(); }
+      }, 50);
+    };
+  });
+  // Add subtask confirm
+  document.querySelectorAll('[data-action="add-subtask-confirm"]').forEach(btn => {
+    btn.onclick = () => {
+      const t = tasks.find(x => x.id === btn.dataset.id);
+      if (!t) return;
+      const form = btn.closest('.add-subtask-form');
+      const title = form.querySelector('[data-sub-new-title]').value.trim();
+      if (!title) return;
+      const assignee = form.querySelector('[data-sub-new-assignee]').value.trim();
+      const estimate = form.querySelector('[data-sub-new-estimate]').value.trim();
+      t.subtasks = t.subtasks || [];
+      t.subtasks.push({ id: genId(), title, assignee, estimate, status: 'todo' });
+      t.expanded = true;
+      form.querySelector('[data-sub-new-title]').value = '';
+      form.querySelector('[data-sub-new-assignee]').value = '';
+      form.querySelector('[data-sub-new-estimate]').value = '';
+      saveState(); render();
+    };
+  });
+  // Subtask status toggle
+  document.querySelectorAll('[data-action="toggle-sub-status"]').forEach(btn => {
+    btn.onclick = () => {
+      const t = tasks.find(x => x.id === btn.dataset.id);
+      if (!t || !t.subtasks) return;
+      const s = t.subtasks.find(x => x.id === btn.dataset.subId);
+      if (s) { s.status = getNextStatus(s.status); saveState(); render(); }
+    };
+  });
+  // Subtask edit (save only)
+  document.querySelectorAll('[data-action="edit-sub"]').forEach(inp => {
+    inp.onchange = () => {
+      const t = tasks.find(x => x.id === inp.dataset.id);
+      if (!t || !t.subtasks) return;
+      const s = t.subtasks.find(x => x.id === inp.dataset.subId);
+      if (s) { s[inp.dataset.field] = inp.value; saveState(); }
+    };
+  });
+  // Delete subtask
+  document.querySelectorAll('[data-action="delete-sub"]').forEach(btn => {
+    btn.onclick = () => {
+      const t = tasks.find(x => x.id === btn.dataset.id);
+      if (!t || !t.subtasks) return;
+      t.subtasks = t.subtasks.filter(s => s.id !== btn.dataset.subId);
+      saveState(); render();
+    };
+  });
+  // Delete task
+  document.querySelectorAll('[data-action="delete-task"]').forEach(btn => {
+    btn.onclick = () => {
+      if (!confirm('Delete this task?')) return;
+      tasks = tasks.filter(t => t.id !== btn.dataset.id);
+      saveState(); render();
+    };
+  });
+  // Enter key on subtask inputs
+  document.querySelectorAll('.add-subtask-form input').forEach(inp => {
+    inp.onkeydown = e => {
+      if (e.key === 'Enter') {
+        const btn = inp.closest('.add-subtask-form').querySelector('[data-action="add-subtask-confirm"]');
+        if (btn) btn.click();
+      }
+    };
+  });
+  // Enter key on task title input to add
+  document.querySelectorAll('.task-title, .task-assignee, .task-estimate').forEach(inp => {
+    inp.onkeydown = e => {
+      if (e.key === 'Enter') inp.blur();
+    };
+  });
+}
+
+// ─── Report ───────────────────────────────────────────────
+function generateReport() {
+  const assigneeMap = {};
+  function ensure(name) {
+    if (!name) return;
+    if (!assigneeMap[name]) assigneeMap[name] = { items: [] };
+  }
+  for (const t of tasks) {
+    if (t.assignee) {
+      ensure(t.assignee);
+      assigneeMap[t.assignee].items.push({ type: 'task', task: t, subtask: null });
+    }
+    for (const s of (t.subtasks || [])) {
+      if (s.assignee) {
+        ensure(s.assignee);
+        assigneeMap[s.assignee].items.push({ type: 'subtask', task: t, subtask: s });
+      }
+    }
+  }
+  const names = Object.keys(assigneeMap).sort();
+  const rows = [];
+  let totalItems = 0, totalDone = 0;
+  for (const name of names) {
+    const items = assigneeMap[name].items;
+    const taskCount = items.filter(i => i.type === 'task').length;
+    const subCount = items.filter(i => i.type === 'subtask').length;
+    const done = items.filter(i => i.subtask ? i.subtask.status === 'done' : i.task.status === 'done').length;
+    const inProg = items.filter(i => i.subtask ? i.subtask.status === 'in-progress' : i.task.status === 'in-progress').length;
+    const todo = items.filter(i => i.subtask ? i.subtask.status === 'todo' : i.task.status === 'todo').length;
+    const progress = items.length > 0 ? Math.round((done / items.length) * 100) : 0;
+
+    // Collect estimates
+    const allEsts = [];
+    const doneEsts = [];
+    for (const i of items) {
+      const estStr = i.subtask ? i.subtask.estimate : i.task.estimate;
+      const parsed = parseEstimate(estStr);
+      if (parsed) allEsts.push(parsed);
+      const isDone = i.subtask ? i.subtask.status === 'done' : i.task.status === 'done';
+      if (isDone && parsed) doneEsts.push(parsed);
+    }
+    const estTotal = estimateSum(allEsts);
+    const estDone = estimateSum(doneEsts);
+
+    totalItems += items.length;
+    totalDone += done;
+    rows.push({ name, taskCount, subCount, total: items.length, todo, inProg, done, progress, estTotal, estDone });
+  }
+  return { rows, totalItems, totalDone, names };
+}
+
+function renderReport() {
+  const { rows, totalItems, totalDone } = generateReport();
+  const el = document.getElementById('reportContent');
+  if (rows.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);">No assignees found. Add tasks with assignees first.</p>';
+    return;
+  }
+
+  const overallPct = totalItems > 0 ? Math.round((totalDone / totalItems) * 100) : 0;
+  const overallClass = overallPct >= 80 ? 'done' : (overallPct >= 30 ? 'in-progress' : 'todo');
+
+  let html = '<div class="report-section">';
+
+  // Overall progress bar
+  html += `<div class="report-total">
+    <span>Total: <strong>${totalDone}/${totalItems}</strong> items</span>
+    <span><strong>${overallPct}%</strong></span>
+    <div class="report-total-bar">
+      <div class="report-total-fill ${overallClass}" style="width:${overallPct}%"></div>
+    </div>
+  </div>`;
+
+  // Table
+  html += '<table class="report-table"><thead><tr>';
+  html += '<th>Assignee</th><th>Tasks</th><th>Subs</th><th>Done</th><th>Est. Total</th><th>Est. Done</th><th>Progress</th>';
+  html += '</tr></thead><tbody>';
+
+  for (const r of rows) {
+    const pctClass = r.progress >= 80 ? 'high' : (r.progress >= 30 ? 'mid' : 'low');
+    const barClass = r.progress >= 80 ? 'done' : (r.progress >= 30 ? 'in-progress' : 'todo');
+    html += '<tr>';
+    html += `<td class="rep-name">${escAttr(r.name)}</td>`;
+    html += `<td>${r.taskCount}</td>`;
+    html += `<td>${r.subCount}</td>`;
+    html += `<td>${r.done}/${r.total}</td>`;
+    html += `<td>${escAttr(r.estTotal)}</td>`;
+    html += `<td>${escAttr(r.estDone)}</td>`;
+    html += `<td class="report-progress-cell">
+      <div class="report-progress-bar"><div class="report-progress-fill ${barClass}" style="width:${r.progress}%"></div></div>
+      <span class="report-pct ${pctClass}">${r.progress}%</span>
+    </td>`;
+    html += '</tr>';
+  }
+
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function exportReportMarkdown() {
+  const { rows, totalItems, totalDone } = generateReport();
+  const overallPct = totalItems > 0 ? Math.round((totalDone / totalItems) * 100) : 0;
+  let md = '# Sprint Report\n\n';
+  md += `**Overall:** ${totalDone}/${totalItems} done (${overallPct}%)\n\n`;
+  md += '| Assignee | Tasks | Subs | Done | Est. Total | Est. Done | Progress |\n';
+  md += '|----------|-------|------|------|------------|-----------|----------|\n';
+  for (const r of rows) {
+    md += `| ${r.name} | ${r.taskCount} | ${r.subCount} | ${r.done}/${r.total} | ${r.estTotal} | ${r.estDone} | ${r.progress}% |\n`;
+  }
+  return md;
+}
+
+// ─── Modal helpers ────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ─── Init ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  loadTheme();
+
+  // Sprint Goal
+  document.getElementById('sprintGoal').value = sprintGoal;
+  document.getElementById('sprintGoal').oninput = function() {
+    sprintGoal = this.value;
+    saveGoal();
+  };
+
+  // Theme buttons
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.onclick = () => setTheme(btn.dataset.theme);
+  });
+
+  // Add task
+  document.getElementById('addBtn').onclick = () => {
+    const title = document.getElementById('newTitle').value.trim();
+    if (!title) return;
+    const assignee = document.getElementById('newAssignee').value.trim();
+    const estimate = document.getElementById('newEstimate').value.trim();
+    tasks.push({ id: genId(), title, assignee, estimate, status: 'todo', expanded: false, subtasks: [] });
+    document.getElementById('newTitle').value = '';
+    document.getElementById('newAssignee').value = '';
+    document.getElementById('newEstimate').value = '';
+    saveState(); render();
+  };
+  // Enter key on new task form
+  document.querySelectorAll('.add-task input').forEach(inp => {
+    inp.onkeydown = e => {
+      if (e.key === 'Enter') document.getElementById('addBtn').click();
+    };
+  });
+
+  // Filter change
+  document.getElementById('filterAssignee').onchange = function() {
+    filterValue = this.value;
+    renderTasks();
+  };
+
+  // Export MD
+  document.getElementById('exportBtn').onclick = () => {
+    const md = exportMarkdown();
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sprint-planning.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Import MD - open modal
+  document.getElementById('importBtn').onclick = () => {
+    document.getElementById('importText').value = '';
+    openModal('importModal');
+  };
+  // Import MD - confirm
+  document.getElementById('importConfirmBtn').onclick = () => {
+    const text = document.getElementById('importText').value.trim();
+    if (!text) return;
+    const result = importMarkdown(text);
+    if (result.tasks.length === 0) { alert('Could not parse any tasks from the markdown.'); return; }
+    tasks = result.tasks;
+    sprintGoal = result.goal;
+    document.getElementById('sprintGoal').value = sprintGoal;
+    saveState(); saveGoal(); render();
+    closeModal('importModal');
+  };
+  document.getElementById('importClose').onclick = () => closeModal('importModal');
+
+  // Report
+  document.getElementById('reportBtn').onclick = () => {
+    renderReport();
+    openModal('reportModal');
+  };
+  document.getElementById('reportClose').onclick = () => closeModal('reportModal');
+  document.getElementById('exportReportBtn').onclick = () => {
+    const md = exportReportMarkdown();
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sprint-report.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Close modals on backdrop click
+  document.querySelectorAll('.modal').forEach(m => {
+    m.onclick = e => { if (e.target === m) m.classList.remove('open'); };
+  });
+  // Close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
+  });
+
+  // Reset
+  document.getElementById('resetBtn').onclick = () => {
+    if (!confirm('Delete ALL tasks? This cannot be undone.')) return;
+    tasks = [];
+    saveState(); render();
+  };
+
+  render();
+});
+</script>
+</body>
+</html>
