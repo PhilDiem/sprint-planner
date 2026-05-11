@@ -25,27 +25,23 @@ A lightweight, single-file sprint planning tool for teams. No build step, no dep
 3. Click the status circle to mark progress.
 4. Use **Export MD** to share the plan, **Report** to see per-person stats.
 
-## Screenshot
+## Example
 
 ```
-┌──────────────────────────────────────────────┐
-│  Sprint Planner      [Light|Dark|Unicorn]     │
-│                    [Export][Import][Report]   │
-├──────────────────────────────────────────────┤
-│  Sprint Goal                                 │
-│  ┌──────────────────────────────────────────┐│
-│  │ Deliver the checkout MVP by Friday      ││
-│  └──────────────────────────────────────────┘│
-│  Filter: [All Assignees ▼]                   │
-│  [Task title...] [Assignee...] [Est...] [Add] │
-├──────────────────────────────────────────────┤
-│  ○ API Design       Alex    3h  ─── 50% ──  │
-│  ├─ ○ GET /users    Alex    1h              │
-│  ├─ ✓ POST /users   Anna    1h              │
-│  └─ ☐ Tests         Alex    1h              │
-│  ○ Setup CI/CD              2d  ───  0% ──  │
-│  ✓ Planning done            -   ───100% ──  │
-└──────────────────────────────────────────────┘
+Sprint Planner                [Light|Dark|Unicorn]
+                              [Export] [Import] [Report]
+
+Sprint Goal: Deliver the checkout MVP by Friday
+
+Filter: [All Assignees ▼]
+[Task title...] [Assignee...] [Est...] [Add]
+
+  ○ API Design            Alex   3h   --- 50% ---
+    ○ GET /users          Alex   1h
+    ✓ POST /users         Anna   1h
+    ☐ Tests               Alex   1h
+  ○ Setup CI/CD                  2d   ---  0% ---
+  ✓ Planning done                 -   ---100% ---
 ```
 
 ## Tech
