@@ -817,6 +817,10 @@ function importMarkdown(md) {
   return { tasks: imported, goal: importedGoal };
 }
 
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+}
+
 // ─── Task helpers ─────────────────────────────────────────
 function getNextStatus(s) {
   if (s === 'todo') return 'in-progress';
